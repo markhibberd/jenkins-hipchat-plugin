@@ -62,8 +62,8 @@ public class HipChatNotifier extends Notifier {
         return BuildStepMonitor.BUILD;
     }
 
-    public HipChatService newHipChatService(final String room) {
-        return new StandardHipChatService(getAuthToken(), room == null ? getRoom() : room, StringUtils.isBlank(getSendAs()) ? "Build Server" : getSendAs());
+    public HipChatService newHipChatService(final String room, final String token) {
+        return new StandardHipChatService(token == null ? getAuthToken() : token, room == null ? getRoom() : room, StringUtils.isBlank(getSendAs()) ? "Build Server" : getSendAs());
     }
 
     @Override
@@ -137,6 +137,7 @@ public class HipChatNotifier extends Notifier {
 
     public static class HipChatJobProperty extends hudson.model.JobProperty<AbstractProject<?, ?>> {
         private String room;
+        private String token;
         private boolean startNotification;
         private boolean notifySuccess;
         private boolean notifyAborted;
@@ -148,6 +149,7 @@ public class HipChatNotifier extends Notifier {
 
         @DataBoundConstructor
         public HipChatJobProperty(String room,
+                                  String token,
                                   boolean startNotification,
                                   boolean notifyAborted,
                                   boolean notifyFailure,
@@ -156,6 +158,7 @@ public class HipChatNotifier extends Notifier {
                                   boolean notifyUnstable,
                                   boolean notifyBackToNormal) {
             this.room = room;
+            this.token = token;
             this.startNotification = startNotification;
             this.notifyAborted = notifyAborted;
             this.notifyFailure = notifyFailure;
@@ -168,6 +171,11 @@ public class HipChatNotifier extends Notifier {
         @Exported
         public String getRoom() {
             return room;
+        }
+
+        @Exported
+        public String getToken() {
+            return token;
         }
 
         @Exported
@@ -232,7 +240,9 @@ public class HipChatNotifier extends Notifier {
 
             @Override
             public HipChatJobProperty newInstance(StaplerRequest sr, JSONObject formData) throws hudson.model.Descriptor.FormException {
-                return new HipChatJobProperty(sr.getParameter("hipChatProjectRoom"),
+                return new HipChatJobProperty(
+                        sr.getParameter("hipChatProjectRoom"),
+                        sr.getParameter("hipChatToken"),
                         sr.getParameter("hipChatStartNotification") != null,
                         sr.getParameter("hipChatNotifyAborted") != null,
                         sr.getParameter("hipChatNotifyFailure") != null,
